@@ -5,6 +5,7 @@ import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
@@ -296,9 +297,14 @@ public final class KillFeedPlugin extends JavaPlugin implements Listener, TabExe
         boolean flash = l.kind != Kind.NORMAL && age >= 8 && age < 30 && (age / 2) % 2 == 0;
         int frame = (age >= 8 && age < 10) ? 2 : (age >= 10 && age < 13) ? 1 : 0;
 
-        int s = 2 * radius(p) - m.totalWidth() + 2 * slide(age);
+        int content = m.totalWidth();          // texto + espacio + icono
+        int panelW = content + 8;              // 4 px de margen a cada lado
+        int s = 2 * radius(p) - panelW + 2 * slide(age);
         TextComponent.Builder b = Component.text().font(FONT);
         b.append(Component.text(spaces(s)));
+        TextColor bg = l.kind == Kind.YOU ? TextColor.color(0x0B4A1E) : l.kind == Kind.ME ? TextColor.color(0x5A0B0B) : TextColor.color(0x000000);
+        b.append(Component.text(panel(panelW), bg));
+        b.append(Component.text(spaces(4 - panelW)));
         for (Part part : m.parts()) {
             Component c = part.base();
             if (flash && part.role() != Role.TEXT) c = c.color(NamedTextColor.WHITE);
@@ -308,7 +314,17 @@ public final class KillFeedPlugin extends JavaPlugin implements Listener, TabExe
         b.append(Component.text(String.valueOf(m.icon().glyph(frame)), NamedTextColor.WHITE));
         int comp = FRAME_H[0] - FRAME_H[frame];
         if (comp != 0) b.append(Component.text(spaces(comp)));
+        b.append(Component.text(spaces(4)));
         return b.build();
+    }
+
+    /** Fondo oscuro de ancho exacto: baldosas de 8 px y de 1 px (cada una avanza 1 px de más, se compensa). */
+    static String panel(int w) {
+        StringBuilder sb = new StringBuilder();
+        char back = (char) 0xE300; // -1 px
+        for (int i = 0; i < w / 8; i++) sb.append('\uE180').append(back);
+        for (int i = 0; i < w % 8; i++) sb.append('\uE181').append(back);
+        return sb.toString();
     }
 
     /** Espacio horizontal exacto en píxeles con la fuente (positivo o negativo). */
